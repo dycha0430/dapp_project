@@ -63,52 +63,6 @@ const abi = [
 		"type": "event"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_roomId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "checkInDate",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "checkOutDate",
-				"type": "uint256"
-			}
-		],
-		"name": "rentRoom",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "name",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "location",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "price",
-				"type": "uint256"
-			}
-		],
-		"name": "shareRoom",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"inputs": [],
 		"name": "getMyRents",
 		"outputs": [
@@ -293,6 +247,42 @@ const abi = [
 		"type": "function"
 	},
 	{
+		"inputs": [],
+		"name": "rentId",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_roomId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "checkInDate",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "checkOutDate",
+				"type": "uint256"
+			}
+		],
+		"name": "rentRoom",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "address",
@@ -331,19 +321,6 @@ const abi = [
 				"internalType": "address",
 				"name": "renter",
 				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "rentId",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -449,10 +426,34 @@ const abi = [
 		],
 		"stateMutability": "view",
 		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "location",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "price",
+				"type": "uint256"
+			}
+		],
+		"name": "shareRoom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	}
-];
+]; 
 
-const contract_address = "0x0966eBfa19a4Af3a20723D7f78bfe313607A462B"; // 따옴표 안에 주소값 복사 붙여넣기
+	
+const contract_address = "0x4662aab3EC1d45B0051f9D2E974992cEB2c1E1eE"; // 따옴표 안에 주소값 복사 붙여넣기
 
 const logIn = async () => {
   const ID = prompt("choose your ID");
@@ -613,6 +614,10 @@ const _shareRoom = async (name, location, price) => {
 
 const _getMyRents = async () => {
   // 내가 대여한 방 리스트를 불러온다.
+	let myRents = await getRoomShareContract().methods.getMyRents().call({from: user})
+		.catch(err => {
+			console.error(err);
+		});
 	
   return myRents;
 }
@@ -726,7 +731,10 @@ const _rentRoom = async (roomId, checkInDate, checkOutDate, price) => {
   // 단위는 finney = milli Eth (10^15)
   // Room ID에 해당하는 방이 체크인하려는 날짜에 대여되어서 대여되지 않는다면 _recommendDate 함수를 호출한다.
   // 화면을 업데이트 한다.
-	
+	let priceToSend = price * (checkOutDate - checkInDate);
+	await getRoomShareContract().methods.rentRoom(roomId, checkInDate, checkOutDate).send({from: user, gas: 3000000, value: priceToSend}).catch(err=>{
+				console.error(err);
+			});
 }
 
 const _recommendDate = async (roomId, checkInDate, checkOutDate) => {
@@ -741,7 +749,11 @@ const getRoomRentHistory = async () => {
   // 선택된 방에 대해 그동안 대여했던 사람들의 목록(히스토리)을 불러온다.
   // 빈 배열을 만들고 주어진 헬퍼 함수 returnOptionsJSON 를 사용하여 선택된 방의 ID 값을 이용해 컨트랙트를 호출한다.
   // 헬퍼 함수 dateFromDay 를 이용한다.
-  
+	let option = returnOptionsJSON();
+	let history = await getRoomShareContract().methods.getRoomRentHistory(option[0]).call({from: user}).catch(err => {
+				console.error(err);
+			});
+
   return history
 }
 

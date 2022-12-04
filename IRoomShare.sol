@@ -51,9 +51,9 @@ interface IRoomShare {
 
     // optional 1
     // caution: 방의 소유자를 먼저 체크해야한다.
-    function markRoomAsInactive(uint256 _roomId) external;
+    // function markRoomAsInactive(uint256 _roomId) external;
 
     // optional 2
     // caution: 변수의 저장공간에 유의한다.
-    function initializeRoomShare(uint _roomId, uint day) external;
+    // function initializeRoomShare(uint _roomId, uint day) external;
 }
