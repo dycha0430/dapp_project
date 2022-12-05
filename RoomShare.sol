@@ -41,7 +41,7 @@ contract RoomShare is IRoomShare {
      for (uint i = 0; i < 365; i++) {
        isRented[i] = false;
      }
-     Room memory room = Room(roomId, name, location, true, price * (10 ** 15), msg.sender, isRented);
+     Room memory room = Room(roomId, name, location, true, price, msg.sender, isRented);
      roomId2room[roomId] = room;
     emit NewRoom(roomId++);
   }
@@ -56,8 +56,11 @@ contract RoomShare is IRoomShare {
      */
      
      Room memory room = roomId2room[_roomId];
-     require(room.isActive == true, "Room is not active.");
-     // if (!room.isActive) return;
+     // require(room.isActive == true, "Room is not active.");
+     if (!room.isActive) {
+       emit NotActive();
+       return;
+     }
      bool canRent = true;
      for (uint i = checkInDate; i < checkOutDate; i++) {
        if (room.isRented[i]) {
@@ -66,10 +69,13 @@ contract RoomShare is IRoomShare {
        }
      }
 
-    require(canRent == true, "Already rented.");
-    //if (!canRent) return;
+    //require(canRent == true, "Already rented.");
+    if (!canRent) {
+      emit AlreadyRented();
+      return;
+    }
 
-     require(msg.value == room.price, "Price is not correctly paid.");
+     require(msg.value == room.price * (checkOutDate - checkInDate) * (10**15), "Price is not correctly paid.");
      
     _sendFunds(room.owner, msg.value);
     _createRent(_roomId, checkInDate, checkOutDate);
@@ -82,10 +88,9 @@ contract RoomShare is IRoomShare {
      * 3. 방 id와 대여 객체들을 매핑한다. (대여 히스토리)
      */
      Rent memory rent = Rent(rentId, _roomId, checkInDate, checkoutDate, msg.sender);
-     Room memory room = roomId2room[_roomId];
+     // Room memory room = roomId2room[_roomId];
      for (uint i = checkInDate; i < checkoutDate; i++) {
-       require(room.isRented[i] == false, "ERROR: room is already rented.");
-       room.isRented[i] = true;
+       roomId2room[_roomId].isRented[i] = true;
      }
      
      renter2rent[msg.sender].push(rent);
@@ -123,6 +128,15 @@ contract RoomShare is IRoomShare {
      return ret;
   }
 
-  // ...
+  function markRoomAsInactive(uint256 _roomId) external {
+    Room memory room = roomId2room[_roomId];
+    if (room.owner != msg.sender) return;
+    roomId2room[_roomId].isActive = false;
+  }
+  
+  // caution: 변수의 저장공간에 유의한다.
+    function initializeRoomShare(uint _roomId, uint day) external {
+
+    }
 
 }

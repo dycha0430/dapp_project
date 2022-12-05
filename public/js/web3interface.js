@@ -464,9 +464,8 @@ const abi = [
 	}
 ];
 	
-		
-	
-const contract_address = "0x06aDEAda0192cD0E86C1DEA57e281eF3C98B49aC"; // 따옴표 안에 주소값 복사 붙여넣기
+
+const contract_address = "0x86e87efD2d977392BDBc25C702D3812fE54FCa87"; // 따옴표 안에 주소값 복사 붙여넣기
 
 const logIn = async () => {
   const ID = prompt("choose your ID");
@@ -477,14 +476,6 @@ const logIn = async () => {
   // 과제 제출 시 (metamask)
   // web3 = await metamaskRequest();
 	RoomShare = getRoomShareContract();
-
-	RoomShare.getPastEvents('AlreadyRented')
-		.then(result => console.log(result))
-		.catch(err => console.log(err));
-	RoomShare.events.AlreadyRented()
-		.on('data', evt => console.log("HI!!" + evt))
-		.on('changed', changed => console.log("changed : " + changed))
-		.on('connected', connected => console.log("connected : " + connected));
 
   user = await getAccountInfos(Number(ID));
 
@@ -757,19 +748,22 @@ const _rentRoom = async (roomId, checkInDate, checkOutDate, price) => {
 	//let priceToSend = price * (checkOutDate - checkInDate);
 	//console.log(priceToSend);
 	let ret = await RoomShare.methods.rentRoom(roomId, checkInDate, checkOutDate).send({from: user, gas: 3000000, value: price * Math.pow(10, 15)})
+		.then(result=> {
+				key = Object.keys(result.events);
+				if (key == "AlreadyRented") {
+					console.log("AlreadyRented!");
+					_recommendDate(roomId, checkInDate, checkOutDate);
+				} else if (key == "NotActive") {
+					console.log("NotActive!");
+				} else if (key == "NewRent") {
+					alert("Rent Success!");
+					console.log("event : " + key);
+				}
+			})
 		.catch(err=>{
 				console.error("ERROR: rentRoom - " + err);
-				alert("ERROR: Not matching ether amount");
+				alert("ERROR: Do not match ether amount");
 			});
-	/*if (ret == 0) {
-		alert("Rent success!");
-	} else if (ret == 1) {
-		// TODO
-	} else if (ret == 2) {
-		_recommendDate(roomId, checkInDate, checkOutDate);
-	}
-	*/
-	
 }
 
 
@@ -780,7 +774,9 @@ const _recommendDate = async (roomId, checkInDate, checkOutDate) => {
   // 주어진 헬퍼 함수 dateFromDay 를 이용한다.
 	let roomNum = await RoomShare.methods.getRoomNum().call({from: user});
 	let reservedDate = await RoomShare.methods.recommendDate(roomId, checkInDate, checkOutDate).call({from: user});
-	alert("Already Rented from " + reservedDate[0] + " to " + reservedDate[1]);
+	let from = dateFromDay(currentYear, reservedDate[0]).toDateString();
+	let to = dateFromDay(currentYear, reservedDate[1]).toDateString();
+	alert("Already Rented from " + from + " to " + to);
 }
 
 
@@ -804,8 +800,8 @@ const displayRoomHistory = async () => {
 	for(let i = 0; i < history.length; ++i) {
 		html += "<tr>";
     html += "<td>" + history[i].id + "</td>"
-    html += "<td>" + history[i].checkInDate + "</td>"
-    html += "<td>" + history[i].checkOutDate + "</td>"
+    html += "<td>" + dateFromDay(currentYear, history[i].checkInDate).toDateString() + "</td>"
+    html += "<td>" + dateFromDay(currentYear, history[i].checkOutDate).toDateString() + "</td>"
     html += "<td>" + history[i].renter.slice(0,12)+"..." + "</td>"
 		html += "</tr>";
 	}
