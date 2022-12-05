@@ -3,478 +3,21 @@ let user;
 
 const mEthPrice = 1600;
 const currentYear = 2022;
-
-const abi = [
-	{
-		"anonymous": false,
-		"inputs": [],
-		"name": "AlreadyRented",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "roomId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "rentId",
-				"type": "uint256"
-			}
-		],
-		"name": "NewRent",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "roomId",
-				"type": "uint256"
-			}
-		],
-		"name": "NewRoom",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [],
-		"name": "NotActive",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "address",
-				"name": "sender",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "address",
-				"name": "recipient",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			}
-		],
-		"name": "Transfer",
-		"type": "event"
-	},
-	{
-		"inputs": [],
-		"name": "getMyRents",
-		"outputs": [
-			{
-				"components": [
-					{
-						"internalType": "uint256",
-						"name": "id",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "rId",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "checkInDate",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "checkOutDate",
-						"type": "uint256"
-					},
-					{
-						"internalType": "address",
-						"name": "renter",
-						"type": "address"
-					}
-				],
-				"internalType": "struct IRoomShare.Rent[]",
-				"name": "",
-				"type": "tuple[]"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_roomId",
-				"type": "uint256"
-			}
-		],
-		"name": "getRoomByRoomId",
-		"outputs": [
-			{
-				"components": [
-					{
-						"internalType": "uint256",
-						"name": "id",
-						"type": "uint256"
-					},
-					{
-						"internalType": "string",
-						"name": "name",
-						"type": "string"
-					},
-					{
-						"internalType": "string",
-						"name": "location",
-						"type": "string"
-					},
-					{
-						"internalType": "bool",
-						"name": "isActive",
-						"type": "bool"
-					},
-					{
-						"internalType": "uint256",
-						"name": "price",
-						"type": "uint256"
-					},
-					{
-						"internalType": "address",
-						"name": "owner",
-						"type": "address"
-					},
-					{
-						"internalType": "bool[]",
-						"name": "isRented",
-						"type": "bool[]"
-					}
-				],
-				"internalType": "struct IRoomShare.Room",
-				"name": "",
-				"type": "tuple"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "getRoomNum",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_roomId",
-				"type": "uint256"
-			}
-		],
-		"name": "getRoomRentHistory",
-		"outputs": [
-			{
-				"components": [
-					{
-						"internalType": "uint256",
-						"name": "id",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "rId",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "checkInDate",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "checkOutDate",
-						"type": "uint256"
-					},
-					{
-						"internalType": "address",
-						"name": "renter",
-						"type": "address"
-					}
-				],
-				"internalType": "struct IRoomShare.Rent[]",
-				"name": "",
-				"type": "tuple[]"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_roomId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "checkInDate",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "checkOutDate",
-				"type": "uint256"
-			}
-		],
-		"name": "recommendDate",
-		"outputs": [
-			{
-				"internalType": "uint256[2]",
-				"name": "",
-				"type": "uint256[2]"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "rentId",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_roomId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "checkInDate",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "checkOutDate",
-				"type": "uint256"
-			}
-		],
-		"name": "rentRoom",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "renter2rent",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "id",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "rId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "checkInDate",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "checkOutDate",
-				"type": "uint256"
-			},
-			{
-				"internalType": "address",
-				"name": "renter",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "roomId",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "roomId2rent",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "id",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "rId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "checkInDate",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "checkOutDate",
-				"type": "uint256"
-			},
-			{
-				"internalType": "address",
-				"name": "renter",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "roomId2room",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "id",
-				"type": "uint256"
-			},
-			{
-				"internalType": "string",
-				"name": "name",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "location",
-				"type": "string"
-			},
-			{
-				"internalType": "bool",
-				"name": "isActive",
-				"type": "bool"
-			},
-			{
-				"internalType": "uint256",
-				"name": "price",
-				"type": "uint256"
-			},
-			{
-				"internalType": "address",
-				"name": "owner",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "name",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "location",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "price",
-				"type": "uint256"
-			}
-		],
-		"name": "shareRoom",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	}
-];
-	
-
-const contract_address = "0x86e87efD2d977392BDBc25C702D3812fE54FCa87"; // 따옴표 안에 주소값 복사 붙여넣기
-
+		
+const contract_address = "0xc14F1BaC6b0B79A6e31460A9efc0c31Bddb5C46e"; // 따옴표 안에 주소값 복사 붙여넣기
+const json2abi = async (path) => {
+  const response = await fetch(path);
+  const abi = await response.json();
+  return abi;
+}
 const logIn = async () => {
-  const ID = prompt("choose your ID");
-
+  //const ID = prompt("choose your ID");
+	const ID = 0;
   // 개발 시 (ganache)
-  web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));	
+  // web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));	
 
   // 과제 제출 시 (metamask)
-  // web3 = await metamaskRequest();
+  web3 = await metamaskRequest();
 	RoomShare = getRoomShareContract();
 
   user = await getAccountInfos(Number(ID));
@@ -539,7 +82,8 @@ const _updateRents = () => {
 
 let RoomShare;
 
-const getRoomShareContract = () => {
+const getRoomShareContract = async () => {
+	const abi = await json2abi("./abi.json");
   RoomShare = new web3.eth.Contract(abi,contract_address)
   return RoomShare
 }
@@ -651,17 +195,14 @@ const displayMyRents = async () => {
 }
 
 const _getAllRooms = async () => {
+  // Room ID 를 기준으로 컨트랙트에 등록된 모든 방 객체의 데이터를 불러온다.
 	let roomNum = await RoomShare.methods.getRoomNum().call({from: user});
-	rooms = [];
-	console.log(roomNum);
-	var i = 0;
-	for (i = 0; i < roomNum; i++) {
+	let rooms = [];
+	
+	for (let i = 0; i < roomNum; i++) {
 		let room = await RoomShare.methods.getRoomByRoomId(i).call({from: user});
 		rooms.push(room);
-		console.log(i);
-		console.log(room);
 	}
-  // Room ID 를 기준으로 컨트랙트에 등록된 모든 방 객체의 데이터를 불러온다.
   return rooms;
 }
 
@@ -744,20 +285,14 @@ const _rentRoom = async (roomId, checkInDate, checkOutDate, price) => {
   // 단위는 finney = milli Eth (10^15)
   // Room ID에 해당하는 방이 체크인하려는 날짜에 대여되어서 대여되지 않는다면 _recommendDate 함수를 호출한다.
   // 화면을 업데이트 한다.
-	// console.log(roomId + " " + price + " " + checkOutDate + " " + checkInDate);
-	//let priceToSend = price * (checkOutDate - checkInDate);
-	//console.log(priceToSend);
 	let ret = await RoomShare.methods.rentRoom(roomId, checkInDate, checkOutDate).send({from: user, gas: 3000000, value: price * Math.pow(10, 15)})
 		.then(result=> {
 				key = Object.keys(result.events);
 				if (key == "AlreadyRented") {
-					console.log("AlreadyRented!");
 					_recommendDate(roomId, checkInDate, checkOutDate);
 				} else if (key == "NotActive") {
-					console.log("NotActive!");
 				} else if (key == "NewRent") {
 					alert("Rent Success!");
-					console.log("event : " + key);
 				}
 			})
 		.catch(err=>{
@@ -772,7 +307,6 @@ const _recommendDate = async (roomId, checkInDate, checkOutDate) => {
   // 기존에 대여된 날짜가 언제부터 언제까지인지 알림 팝업으로 표시한다.
   // checkInDate <= 대여된 체크인 날짜 , 대여된 체크아웃 날짜 < checkOutDate
   // 주어진 헬퍼 함수 dateFromDay 를 이용한다.
-	let roomNum = await RoomShare.methods.getRoomNum().call({from: user});
 	let reservedDate = await RoomShare.methods.recommendDate(roomId, checkInDate, checkOutDate).call({from: user});
 	let from = dateFromDay(currentYear, reservedDate[0]).toDateString();
 	let to = dateFromDay(currentYear, reservedDate[1]).toDateString();
@@ -785,8 +319,7 @@ const getRoomRentHistory = async () => {
   // 빈 배열을 만들고 주어진 헬퍼 함수 returnOptionsJSON 를 사용하여 선택된 방의 ID 값을 이용해 컨트랙트를 호출한다.
   // 헬퍼 함수 dateFromDay 를 이용한다.
 	let option = returnOptionsJSON();
-	console.log(option);
-	let history = await getRoomShareContract().methods.getRoomRentHistory(option[0]).call({from: user}).catch(err => {
+	let history = await RoomShare.methods.getRoomRentHistory(option[0]).call({from: user}).catch(err => {
 				console.error("ERROR: getRoomRentHistory - " + err);
 			});
 

@@ -128,15 +128,10 @@ contract RoomShare is IRoomShare {
      return ret;
   }
 
-  function markRoomAsInactive(uint256 _roomId) external {
+  function markRoomAsInactive(uint256 _roomId) external override {
     Room memory room = roomId2room[_roomId];
     if (room.owner != msg.sender) return;
     roomId2room[_roomId].isActive = false;
   }
-  
-  // caution: 변수의 저장공간에 유의한다.
-    function initializeRoomShare(uint _roomId, uint day) external {
-
-    }
 
 }
