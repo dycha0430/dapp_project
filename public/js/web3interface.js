@@ -7,6 +7,12 @@ const currentYear = 2022;
 const abi = [
 	{
 		"anonymous": false,
+		"inputs": [],
+		"name": "AlreadyRented",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
 		"inputs": [
 			{
 				"indexed": true,
@@ -35,6 +41,12 @@ const abi = [
 			}
 		],
 		"name": "NewRoom",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [],
+		"name": "NotActive",
 		"type": "event"
 	},
 	{
@@ -450,10 +462,11 @@ const abi = [
 		"stateMutability": "nonpayable",
 		"type": "function"
 	}
-]; 
-
+];
 	
-const contract_address = "0x4662aab3EC1d45B0051f9D2E974992cEB2c1E1eE"; // 따옴표 안에 주소값 복사 붙여넣기
+		
+	
+const contract_address = "0x06aDEAda0192cD0E86C1DEA57e281eF3C98B49aC"; // 따옴표 안에 주소값 복사 붙여넣기
 
 const logIn = async () => {
   const ID = prompt("choose your ID");
@@ -463,6 +476,15 @@ const logIn = async () => {
 
   // 과제 제출 시 (metamask)
   // web3 = await metamaskRequest();
+	RoomShare = getRoomShareContract();
+
+	RoomShare.getPastEvents('AlreadyRented')
+		.then(result => console.log(result))
+		.catch(err => console.log(err));
+	RoomShare.events.AlreadyRented()
+		.on('data', evt => console.log("HI!!" + evt))
+		.on('changed', changed => console.log("changed : " + changed))
+		.on('connected', connected => console.log("connected : " + connected));
 
   user = await getAccountInfos(Number(ID));
 
@@ -604,7 +626,7 @@ const _shareRoom = async (name, location, price) => {
   // 트랜잭션이 올바르게 발생하면 알림 팝업을 띄운다. (e.g. alert("등록"))
   // 화면을 업데이트 한다.
 
-	await getRoomShareContract().methods.shareRoom(name, location, price).send({from: user, gas: 3000000})
+	await RoomShare.methods.shareRoom(name, location, price).send({from: user, gas: 3000000})
 		.catch(err => {
 			console.log(err);
 		});
@@ -614,7 +636,7 @@ const _shareRoom = async (name, location, price) => {
 
 const _getMyRents = async () => {
   // 내가 대여한 방 리스트를 불러온다.
-	let myRents = await getRoomShareContract().methods.getMyRents().call({from: user})
+	let myRents = await RoomShare.methods.getMyRents().call({from: user})
 		.catch(err => {
 			console.error(err);
 		});
@@ -638,12 +660,12 @@ const displayMyRents = async () => {
 }
 
 const _getAllRooms = async () => {
-	let roomNum = await getRoomShareContract().methods.getRoomNum().call({from: user});
+	let roomNum = await RoomShare.methods.getRoomNum().call({from: user});
 	rooms = [];
 	console.log(roomNum);
 	var i = 0;
 	for (i = 0; i < roomNum; i++) {
-		let room = await getRoomShareContract().methods.getRoomByRoomId(i).call({from: user});
+		let room = await RoomShare.methods.getRoomByRoomId(i).call({from: user});
 		rooms.push(room);
 		console.log(i);
 		console.log(room);
@@ -697,7 +719,7 @@ const returnOptionsJSON = () => {
 
 const calculatePrice = (checkInDate,checkOutDate) => {
   const jsonobj = returnOptionsJSON();
-  const price = Number(jsonobj.price);
+  const price = Number(jsonobj[4]);
   const _price = (checkOutDate-checkInDate)*price;
   return _price;
 }
@@ -715,7 +737,7 @@ const rentRoom = async () => {
 
   const _price = calculatePrice(checkInDate,checkOutDate);
   const jsonobj = returnOptionsJSON();
-  const roomId = jsonobj.id;
+  const roomId = jsonobj[0];
 
   await _rentRoom(roomId, checkInDate, checkOutDate, _price);
 
@@ -731,17 +753,34 @@ const _rentRoom = async (roomId, checkInDate, checkOutDate, price) => {
   // 단위는 finney = milli Eth (10^15)
   // Room ID에 해당하는 방이 체크인하려는 날짜에 대여되어서 대여되지 않는다면 _recommendDate 함수를 호출한다.
   // 화면을 업데이트 한다.
-	let priceToSend = price * (checkOutDate - checkInDate);
-	await getRoomShareContract().methods.rentRoom(roomId, checkInDate, checkOutDate).send({from: user, gas: 3000000, value: priceToSend}).catch(err=>{
-				console.error(err);
+	// console.log(roomId + " " + price + " " + checkOutDate + " " + checkInDate);
+	//let priceToSend = price * (checkOutDate - checkInDate);
+	//console.log(priceToSend);
+	let ret = await RoomShare.methods.rentRoom(roomId, checkInDate, checkOutDate).send({from: user, gas: 3000000, value: price * Math.pow(10, 15)})
+		.catch(err=>{
+				console.error("ERROR: rentRoom - " + err);
+				alert("ERROR: Not matching ether amount");
 			});
+	/*if (ret == 0) {
+		alert("Rent success!");
+	} else if (ret == 1) {
+		// TODO
+	} else if (ret == 2) {
+		_recommendDate(roomId, checkInDate, checkOutDate);
+	}
+	*/
+	
 }
+
 
 const _recommendDate = async (roomId, checkInDate, checkOutDate) => {
   // Room ID에 해당하는 방이 체크인하려는 날짜에 대여되었다면,
   // 기존에 대여된 날짜가 언제부터 언제까지인지 알림 팝업으로 표시한다.
   // checkInDate <= 대여된 체크인 날짜 , 대여된 체크아웃 날짜 < checkOutDate
   // 주어진 헬퍼 함수 dateFromDay 를 이용한다.
+	let roomNum = await RoomShare.methods.getRoomNum().call({from: user});
+	let reservedDate = await RoomShare.methods.recommendDate(roomId, checkInDate, checkOutDate).call({from: user});
+	alert("Already Rented from " + reservedDate[0] + " to " + reservedDate[1]);
 }
 
 
@@ -750,8 +789,9 @@ const getRoomRentHistory = async () => {
   // 빈 배열을 만들고 주어진 헬퍼 함수 returnOptionsJSON 를 사용하여 선택된 방의 ID 값을 이용해 컨트랙트를 호출한다.
   // 헬퍼 함수 dateFromDay 를 이용한다.
 	let option = returnOptionsJSON();
+	console.log(option);
 	let history = await getRoomShareContract().methods.getRoomRentHistory(option[0]).call({from: user}).catch(err => {
-				console.error(err);
+				console.error("ERROR: getRoomRentHistory - " + err);
 			});
 
   return history
